@@ -1,11 +1,14 @@
 from rply import ParserGenerator, LexerGenerator
 from rply.token import BaseBox
+from collections import OrderedDict
 import cmd
+import tokenize
+from string import Template
 
 
-DRAGON_GLOBALS = dict()
+DRAGON_VAR = OrderedDict()
 
-class Number(BaseBox):
+class Variable(BaseBox):
     def __init__(self, value):
         self.value = value
 
@@ -13,13 +16,17 @@ class Number(BaseBox):
         return self.value
 
     def __repr__(self):
-        return str(self.getvalue())
+        if isinstance(self.value, float):
+            return '{:g}'.format(self.value)
+        return str(self.value)
 
 lg = LexerGenerator()
 
-lg.add('WORD', r'[_a-zA-Z\u2e80-\u9fff]+[_a-zA-Z0-9\u2e80-\u9fff]*')
+lg.add('WORD', r'[_a-zA-Z][_a-zA-Z0-9]*')
+lg.add('MAGIC_KEY', r'^[ \\f\\t ]*\$[_a-zA-Z][_a-zA-Z0-9]*')
+lg.add('NUMBER', tokenize.Number)
+lg.add('STRING', tokenize.String)
 lg.add('EQUAL', r'=')
-lg.add('NUMBER', r'\d+\.?\d*')
 lg.add('PLUS', r'\+')
 lg.add('MINUS', r'-')
 lg.add('TIMES', r'\*')
@@ -30,7 +37,8 @@ lg.add('CLOSE_PARENS', r'\)')
 lg.ignore(r'\s+')
 
 pg = ParserGenerator(
-        ['WORD', 'EQUAL', 'NUMBER', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'OPEN_PARENS', 'CLOSE_PARENS'],
+        ['WORD', 'MAGIC_KEY', 'NUMBER', 'STRING',
+         'EQUAL', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'OPEN_PARENS', 'CLOSE_PARENS'],
         precedence=[
             ('left', ['EQUAL']),
             ('left', ['PLUS', 'MINUS']),
@@ -39,25 +47,41 @@ pg = ParserGenerator(
 @pg.production('expression : WORD')
 def expression_word(p):
     var_name = p[0].getstr()
-    if var_name in DRAGON_GLOBALS:
-        return Number(DRAGON_GLOBALS[var_name])
+    if var_name in DRAGON_VAR:
+        return Variable(DRAGON_VAR[var_name])
     print("NameError: name '{}' is not defined".format(var_name))
-
-@pg.production('expression : WORD EQUAL expression')
-def expression_assignment(p):
-    DRAGON_GLOBALS[p[0].getstr()] = p[2].getvalue()
 
 @pg.production('expression : NUMBER')
 def expression_number(p):
-    return Number(float(p[0].getstr()))
+    number = float(p[0].getstr())
+    if number.is_integer():
+        return Variable(int(number))
+    return Variable(number)
+
+@pg.production('expression : STRING')
+def expression_string(p):
+    template = Template(eval(p[0].getstr()))
+    return Variable(template.substitute(DRAGON_VAR))
+
+@pg.production('expression : MAGIC_KEY')
+def expression_magic_key(p):
+    key = p[0].getstr()[1:]
+    if key == 'var':
+        print(dict(DRAGON_VAR))
+    elif key == 'out':
+        print(DRAGON_VAR.get('$out', ''))
+
+@pg.production('expression : WORD EQUAL expression')
+def expression_assignment(p):
+    DRAGON_VAR[p[0].getstr()] = p[2].getvalue()
 
 @pg.production('expression : PLUS expression')
 def expression_positive(p):
-    return Number(p[1].getvalue())
+    return Variable(p[1].getvalue())
 
 @pg.production('expression : MINUS expression')
 def expression_negative(p):
-    return Number(-p[1].getvalue())
+    return Variable(-p[1].getvalue())
 
 @pg.production('expression : OPEN_PARENS expression CLOSE_PARENS')
 def expression_parens(p):
@@ -71,13 +95,13 @@ def expression_operator(p):
     lhs = p[0].getvalue()
     rhs = p[2].getvalue()
     if p[1].gettokentype() == 'PLUS':
-        return Number(lhs + rhs)
+        return Variable(lhs + rhs)
     elif p[1].gettokentype() == 'MINUS':
-        return Number(lhs - rhs)
+        return Variable(lhs - rhs)
     elif p[1].gettokentype() == 'TIMES':
-        return Number(lhs * rhs)
+        return Variable(lhs * rhs)
     elif p[1].gettokentype() == 'DIVIDE':
-        return Number(lhs / rhs)
+        return Variable(lhs / rhs)
     else:
         raise AssertionError('This is impossible, abort the time machine!')
 
@@ -98,7 +122,9 @@ class Shell(cmd.Cmd):
 
     def default(self, line):
         result = self.parser.parse(self.lexer.lex(line))
-        if result: print(result)
+        if result is not None:
+            DRAGON_VAR['$out'] = result.getvalue()
+            print(result)
 
 
 if __name__ == '__main__':
