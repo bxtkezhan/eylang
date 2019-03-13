@@ -1,7 +1,7 @@
 from rply import LexerGenerator
 from rply import ParserGenerator
 
-from dragon.value import Value
+from dragon.value import Value, ListStack
 from dragon import operator
 
 import tokenize
@@ -20,6 +20,7 @@ lg.add('PLUS', r'\+')
 lg.add('MINUS', r'-')
 lg.add('MUL', r'\*')
 lg.add('DIV', r'/')
+lg.add('COMMA', r',')
 lg.add('OPEN_PARENS', r'\(')
 lg.add('CLOSE_PARENS', r'\)')
 lg.add('EQUAL', r'=')
@@ -29,12 +30,13 @@ lg.ignore('\s+')
 pg = ParserGenerator(
     # A list of all token names, accepted by the parser.
     ['IMAGE_NUMBER', 'FLOAT_NUMBER', 'INT_NUMBER', 'STRING', 'NAME',
-     'EQUAL', 'OPEN_PARENS', 'CLOSE_PARENS', 'PLUS', 'MINUS', 'MUL', 'DIV'
+     'PLUS', 'MINUS', 'MUL', 'DIV', 'OPEN_PARENS', 'CLOSE_PARENS', 'COMMA', 'EQUAL'
     ],
     # A list of precedence rules with ascending precedence, to
     # disambiguate ambiguous production rules.
     precedence=[
         ('left', ['EQUAL']),
+        ('left', ['COMMA']),
         ('left', ['PLUS', 'MINUS']),
         ('left', ['MUL', 'DIV'])
     ]
@@ -63,10 +65,6 @@ def expression_variable(p):
     else:
         raise NameError("name '{}' is not defined".format(name))
 
-@pg.production('expression : OPEN_PARENS expression CLOSE_PARENS')
-def expression_parens(p):
-    return p[1]
-
 @pg.production('expression : PLUS expression')
 @pg.production('expression : MINUS expression')
 def expression_oneop(p):
@@ -92,6 +90,22 @@ def expression_binop(p):
         return operator.Div(p[0], p[2])
     else:
         raise AssertionError('Oops, this should not be possible!')
+
+@pg.production('expression : OPEN_PARENS expression CLOSE_PARENS')
+def expression_parens(p):
+    if isinstance(p[1], ListStack):
+        return p[1].tovalue()
+    return p[1]
+
+@pg.production('expression : expression COMMA expression')
+def expression_list(p):
+    if isinstance(p[0], Value):
+        list_stack = ListStack(p[0].eval())
+        list_stack.append(p[2].eval())
+    elif isinstance(p[0], ListStack):
+        list_stack = p[0]
+        list_stack.append(p[2].eval())
+    return list_stack
 
 @pg.production('expression : NAME EQUAL expression')
 def expression_assignment(p):
