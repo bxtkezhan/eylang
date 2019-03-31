@@ -1,6 +1,6 @@
 from dragon.dragonlexer import lexer
 from dragon.dragonparser import parser
-import json
+import pprint
 
 
 code = '''\
@@ -16,14 +16,16 @@ for token in lexer.lex(code):
 print('- ' * 32)
 code = '''\
 #! /usr/bin/env dragon
-
-123
-
-432
-1024j
+a = 1 + 1.1j
+1 + 2^10
+a
+a * (b + c^2)
+b = "abc\\n"
+[['a', 'b', 'c'], [1, 2, 3]]
+l = [['a', 'b', 'c'], [1, 2, 3], 1 + 2 + 3]
+[2^1024, 1.25 + 5.21j]
 '''
 print('```')
 print(code)
 print('```')
-tree = json.dumps(parser.parse(lexer.lex(code)), ensure_ascii=False, indent=2, sort_keys=True)
-print(tree)
+pprint.pprint((parser.parse(lexer.lex(code))))

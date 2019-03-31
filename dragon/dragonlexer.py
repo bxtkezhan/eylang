@@ -16,11 +16,13 @@ rules = [
     ['PLUS', r'\+'],
     ['MINUS', r'-'],
     ['MUL', r'\*'],
-    ['POW', r'\^'],
+    ['POWER', r'\^'],
     ['DIV', r'/'],
     ['MOD', r'%'],
-    ['LPAREN', r'\('],
-    ['RPAREN', r'\)'],
+    ['LPAR', r'\('],
+    ['RPAR', r'\)'],
+    ['LSQB', r'\['],
+    ['RSQB', r'\]'],
     ['EQ', r'=='],
     ['LT', r'<'],
     ['LE', r'<='],
@@ -37,4 +39,17 @@ for name, regex in rules:
 
 lg.ignore(tokenize.group(r'\\\r?\n', r'[ \f\t]+', tokenize.Comment))
 
-lexer = lg.build()
+class DragonLexer:
+    def __init__(self):
+        self.lexer = lg.build()
+
+    def lex(self, code):
+        tokens = self.lexer.lex(code)
+        while True:
+            token = next(tokens)
+            tokentype = token.gettokentype()
+            if tokentype == 'NAME':
+                token.name = reserved.get(token.getstr(), tokentype)
+            yield token
+
+lexer = DragonLexer()
