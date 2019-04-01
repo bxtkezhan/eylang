@@ -16,14 +16,17 @@ for token in lexer.lex(code):
 print('- ' * 32)
 code = '''\
 #! /usr/bin/env dragon
-a = 1 + 1.1j
-1 + 2^10
-a
-a * (b + c^2)
-b = "abc\\n"
-[['a', 'b', 'c'], [1, 2, 3]]
-l = [['a', 'b', 'c'], [1, 2, 3], 1 + 2 + 3]
-[2^1024, 1.25 + 5.21j]
+def myfunc(a) then
+    b = a - 100
+    c = b * 100
+    if a then
+        c = a / 10
+    end
+    d = c^2
+    def test() then
+        a = 10
+    end
+end
 '''
 print('```')
 print(code)

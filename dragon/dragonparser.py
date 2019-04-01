@@ -32,6 +32,38 @@ def p_statement(p):
 def p_statement_newline(p):
     return (p[0].getsourcepos().lineno, (p[0].gettokentype(), None))
 
+@pg.production('command : DEF variable LPAR varlist RPAR THEN NEWLINE program END')
+@pg.production('command : DEF variable LPAR RPAR THEN NEWLINE program END')
+def p_command_function(p):
+    if len(p) > 8:
+        return ('FUNCTION', (p[1], p[3], p[7]))
+    else:
+        return ('FUNCTION', (p[1], p[6]))
+
+@pg.production('command : FOR variable IN expr THEN NEWLINE program ELSE program END')
+@pg.production('command : FOR variable IN expr THEN NEWLINE program END')
+def p_command_for(p):
+    if len(p) > 8:
+        return ('FOR', (p[1], p[3], p[6], p[8]))
+    else:
+        return ('FOR', (p[1], p[3], p[6]))
+
+@pg.production('command : WHILE expr THEN NEWLINE program ELSE program END')
+@pg.production('command : WHILE expr THEN NEWLINE program END')
+def p_command_while(p):
+    if len(p) > 6:
+        return ('WHILE', (p[1], p[4], p[6]))
+    else:
+        return ('WHILE', (p[1], p[4]))
+
+@pg.production('command : IF expr THEN NEWLINE program ELSE program END')
+@pg.production('command : IF expr THEN NEWLINE program END')
+def p_command_if(p):
+    if len(p) > 6:
+        return ('IF', (p[1], p[4], p[6]))
+    else:
+        return ('IF', (p[1], p[4]))
+
 @pg.production('command : variable ASSIGN expr')
 def p_command_assign(p):
     return ('ASSIGN', (p[0], p[2]))
@@ -80,6 +112,16 @@ def p_expr_constant(p):
 @pg.production('expr : variable')
 def p_expr_variable(p):
     return p[0]
+
+@pg.production('varlist : varlist COMMA variable')
+@pg.production('varlist : variable')
+def p_varlist(p):
+    if len(p) > 1:
+        _, items = p[0]
+        items.append(p[2])
+        return ('VARLIST', items)
+    else:
+        return ('VARLIST', [p[0]])
 
 @pg.production('variable : NAME')
 def p_variable(p):
