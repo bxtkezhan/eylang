@@ -107,50 +107,43 @@ def p_expr_variable(p):
     return p[0]
 
 @pg.production('expr : tuple')
-def p_expr_tuple(p):
-    return p[0]
-
 @pg.production('expr : list')
-def p_expr_list(p):
+def p_expr_sequence(p):
     return p[0]
 
 @pg.production('tuple : rtuple RPAR')
 def p_tuple(p):
-    return p[0]
+    return ('TUPLE', p[0])
 
 @pg.production('rtuple : rtuple COMMA expr')
 @pg.production('rtuple : ltuple expr')
 def p_rtuple(p):
     if len(p) > 2:
-        _, items = p[0]
-        items.append(p[2])
+        p[0].append(p[2])
     else:
-        _, items = p[0]
-        items.append(p[1])
-    return ('TUPLE', items)
+        p[0].append(p[1])
+    return p[0]
 
 @pg.production('ltuple : LPAR expr COMMA')
 def p_ltuple(p):
-    return ('TUPLE', [p[1]])
+    return [p[1]]
 
 @pg.production('list : rlist RSQB')
 def p_list(p):
-    return p[0]
+    return ('LIST', p[0])
 
 @pg.production('rlist : rlist COMMA expr')
 @pg.production('rlist : llist expr')
 def p_rlist(p):
     if len(p) > 2:
-        _, items = p[0]
-        items.append(p[2])
+        p[0].append(p[2])
     else:
-        _, items = p[0]
-        items.append(p[1])
-    return ('LIST', items)
+        p[0].append(p[1])
+    return p[0]
 
 @pg.production('llist : LSQB expr COMMA')
 def p_llist(p):
-    return ('LIST', [p[1]])
+    return [p[1]]
 
 @pg.production('varlist : varlist COMMA variable')
 @pg.production('varlist : variable')

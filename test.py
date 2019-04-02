@@ -30,7 +30,7 @@ def myfunc(x, y, z) then
     return a
 end
 
-myfunc(10, myfunc(), myfunc(10, 20, 30))
+myfunc([1, 2], myfunc(), myfunc(10, 20, 30))
 
 [1 * 10, (2, 3), [1, 2, 3]]
 '''
