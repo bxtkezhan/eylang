@@ -6,10 +6,10 @@ from rply import ParserGenerator
 pg = ParserGenerator(
     list(reserved.values()) + [name for name, _ in lex_rules],
     precedence=[
-        ('left', ['COMMA']),
         ('left', ['PLUS', 'MINUS']),
         ('left', ['MUL', 'DIV', 'MOD']),
         ('left', ['POWER']),
+        ('left', ['UMINUS']),
     ]
 )
 
@@ -32,13 +32,17 @@ def p_statement(p):
 def p_statement_newline(p):
     return (p[0].getsourcepos().lineno, (p[0].gettokentype(), None))
 
+@pg.production('command : RETURN expr')
+def p_command_return(p):
+    return ('RETURN', p[1])
+
 @pg.production('command : DEF variable LPAR varlist RPAR THEN NEWLINE program END')
 @pg.production('command : DEF variable LPAR RPAR THEN NEWLINE program END')
-def p_command_function(p):
+def p_command_def(p):
     if len(p) > 8:
-        return ('FUNCTION', (p[1], p[3], p[7]))
+        return ('DEF', (p[1], p[3], p[7]))
     else:
-        return ('FUNCTION', (p[1], p[6]))
+        return ('DEF', (p[1], p[6]))
 
 @pg.production('command : FOR variable IN expr THEN NEWLINE program ELSE program END')
 @pg.production('command : FOR variable IN expr THEN NEWLINE program END')
@@ -72,8 +76,65 @@ def p_command_assign(p):
 def p_command_expr(p):
     return ('EXPR', p[0])
 
-@pg.production('expr : rlist RSQB')
+@pg.production('expr : expr PLUS expr')
+@pg.production('expr : expr MINUS expr')
+@pg.production('expr : expr MUL expr')
+@pg.production('expr : expr DIV expr')
+@pg.production('expr : expr MOD expr')
+@pg.production('expr : expr POWER expr')
+def p_expr_binary(p):
+    return (p[1].gettokentype(), (p[0], p[2]))
+
+@pg.production('expr : LPAR expr RPAR')
+def p_expr_parens(p):
+    return ('PARENS', p[1])
+
+@pg.production('expr : variable LPAR RPAR')
+@pg.production('expr : variable tuple')
+def p_expr_function(p):
+    if len(p) > 2:
+        return ('FUNC', (p[0]))
+    else:
+        return ('FUNC', (p[0], p[1]))
+
+@pg.production('expr : NUMBER')
+@pg.production('expr : STRING')
+def p_expr_constant(p):
+    return (p[0].gettokentype(), eval(p[0].getstr()))
+
+@pg.production('expr : variable')
+def p_expr_variable(p):
+    return p[0]
+
+@pg.production('expr : tuple')
+def p_expr_tuple(p):
+    return p[0]
+
+@pg.production('expr : list')
 def p_expr_list(p):
+    return p[0]
+
+@pg.production('tuple : rtuple RPAR')
+def p_tuple(p):
+    return p[0]
+
+@pg.production('rtuple : rtuple COMMA expr')
+@pg.production('rtuple : ltuple expr')
+def p_rtuple(p):
+    if len(p) > 2:
+        _, items = p[0]
+        items.append(p[2])
+    else:
+        _, items = p[0]
+        items.append(p[1])
+    return ('TUPLE', items)
+
+@pg.production('ltuple : LPAR expr COMMA')
+def p_ltuple(p):
+    return ('TUPLE', [p[1]])
+
+@pg.production('list : rlist RSQB')
+def p_list(p):
     return p[0]
 
 @pg.production('rlist : rlist COMMA expr')
@@ -90,28 +151,6 @@ def p_rlist(p):
 @pg.production('llist : LSQB expr COMMA')
 def p_llist(p):
     return ('LIST', [p[1]])
-
-@pg.production('expr : expr PLUS expr')
-@pg.production('expr : expr MINUS expr')
-@pg.production('expr : expr MUL expr')
-@pg.production('expr : expr DIV expr')
-@pg.production('expr : expr MOD expr')
-@pg.production('expr : expr POWER expr')
-def p_expr_binary(p):
-    return (p[1].gettokentype(), (p[0], p[2]))
-
-@pg.production('expr : LPAR expr RPAR')
-def p_expr_parens(p):
-    return ('PARENS', p[1])
-
-@pg.production('expr : NUMBER')
-@pg.production('expr : STRING')
-def p_expr_constant(p):
-    return (p[0].gettokentype(), eval(p[0].getstr()))
-
-@pg.production('expr : variable')
-def p_expr_variable(p):
-    return p[0]
 
 @pg.production('varlist : varlist COMMA variable')
 @pg.production('varlist : variable')

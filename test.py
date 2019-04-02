@@ -16,17 +16,23 @@ for token in lexer.lex(code):
 print('- ' * 32)
 code = '''\
 #! /usr/bin/env dragon
-def myfunc(a) then
-    b = a - 100
-    c = b * 100
-    if a then
-        c = a / 10
+def myfunc(x, y, z) then
+    a = x
+
+    if y then
+        a = y
     end
-    d = c^2
-    def test() then
-        a = 10
+
+    if z then
+        a = z
     end
+
+    return a
 end
+
+myfunc(10, myfunc(), myfunc(10, 20, 30))
+
+[1 * 10, (2, 3), [1, 2, 3]]
 '''
 print('```')
 print(code)
