@@ -12,7 +12,6 @@ rules = [
     ['NUMBER', tokenize.Number],
     ['STRING', tokenize.String],
     ['NAME', tokenize.Name],
-    ['ASSIGN', r'='],
     ['PLUS', r'\+'],
     ['MINUS', r'-'],
     ['MUL', r'\*'],
@@ -24,14 +23,15 @@ rules = [
     ['LSQB', r'\['],
     ['RSQB', r'\]'],
     ['EQ', r'=='],
-    ['LT', r'<'],
     ['LE', r'<='],
-    ['GT', r'>'],
+    ['LT', r'<'],
     ['GE', r'>='],
+    ['GT', r'>'],
     ['NE', r'!='],
     ['COMMA', r'\,'],
     ['SEMI', r';'],
     ['COLON', r':'],
+    ['ASSIGN', r'='],
     ['NEWLINE', '\n']]
 
 for name, regex in rules:

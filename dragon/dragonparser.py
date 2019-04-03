@@ -6,6 +6,8 @@ from rply import ParserGenerator
 pg = ParserGenerator(
     list(reserved.values()) + [name for name, _ in lex_rules],
     precedence=[
+        ('left', ['AND', 'OR', 'NOT']),
+        ('left', ['EQ', 'LT', 'LE', 'GT', 'GE', 'NE']),
         ('left', ['PLUS', 'MINUS']),
         ('left', ['MUL', 'DIV', 'MOD']),
         ('left', ['POWER']),
@@ -60,6 +62,10 @@ def p_command_while(p):
     else:
         return ('WHILE', (p[1], p[4]))
 
+@pg.production('command : ELIF expr THEN')
+def p_command_elif(p):
+    return ('ELIF', p[1])
+
 @pg.production('command : IF expr THEN NEWLINE program ELSE program END')
 @pg.production('command : IF expr THEN NEWLINE program END')
 def p_command_if(p):
@@ -82,8 +88,26 @@ def p_command_expr(p):
 @pg.production('expr : expr DIV expr')
 @pg.production('expr : expr MOD expr')
 @pg.production('expr : expr POWER expr')
-def p_expr_binary(p):
+def p_expr_binop(p):
     return (p[1].gettokentype(), (p[0], p[2]))
+
+@pg.production('expr : expr EQ expr')
+@pg.production('expr : expr LT expr')
+@pg.production('expr : expr LE expr')
+@pg.production('expr : expr GT expr')
+@pg.production('expr : expr GE expr')
+@pg.production('expr : expr NE expr')
+def p_expr_relop(p):
+    return (p[1].gettokentype(), (p[0], p[2]))
+
+@pg.production('expr : expr AND expr')
+@pg.production('expr : expr OR expr')
+@pg.production('expr : NOT expr')
+def p_expr_logic(p):
+    if len(p) > 2:
+        return (p[1].gettokentype(), (p[0], p[2]))
+    else:
+        return (p[0].gettokentype(), (p[1], ))
 
 @pg.production('expr : LPAR expr RPAR')
 def p_expr_parens(p):
@@ -93,7 +117,7 @@ def p_expr_parens(p):
 @pg.production('expr : variable tuple')
 def p_expr_function(p):
     if len(p) > 2:
-        return ('FUNC', (p[0]))
+        return ('FUNC', (p[0], ))
     else:
         return ('FUNC', (p[0], p[1]))
 
