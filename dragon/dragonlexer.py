@@ -5,7 +5,7 @@ import tokenize
 lg = LexerGenerator()
 
 reserved = {v.lower(): v for v in [
-    'PUTS', 'AND', 'OR', 'NOT', 'IF', 'THEN', 'ELIF', 'ELSE', 'END',
+    'PUTS', 'AND', 'OR', 'NOT', 'IF', 'ELIF', 'ELSE', 'END',
     'WHILE', 'FOR', 'IN', 'DEF', 'RETURN']}
 
 rules = [
@@ -22,6 +22,8 @@ rules = [
     ['RPAR', r'\)'],
     ['LSQB', r'\['],
     ['RSQB', r'\]'],
+    ['LBRACE', r'\{'],
+    ['RBRACE', r'\}'],
     ['EQ', r'=='],
     ['LE', r'<='],
     ['LT', r'<'],
@@ -29,7 +31,6 @@ rules = [
     ['GT', r'>'],
     ['NE', r'!='],
     ['COMMA', r'\,'],
-    ['SEMI', r';'],
     ['COLON', r':'],
     ['ASSIGN', r'='],
     ['NEWLINE', '\n']]

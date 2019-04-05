@@ -38,45 +38,49 @@ def p_statement_newline(p):
 def p_command_return(p):
     return ('RETURN', p[1])
 
-@pg.production('command : DEF variable LPAR varlist RPAR THEN NEWLINE program END')
-@pg.production('command : DEF variable LPAR RPAR THEN NEWLINE program END')
+@pg.production('command : DEF variable LPAR paralist RPAR NEWLINE program END')
+@pg.production('command : DEF variable LPAR RPAR NEWLINE program END')
 def p_command_def(p):
-    if len(p) > 8:
-        return ('DEF', (p[1], p[3], p[7]))
+    if len(p) > 7:
+        return ('DEF', (p[1], p[3], p[6]))
     else:
-        return ('DEF', (p[1], p[6]))
+        return ('DEF', (p[1], p[5]))
 
-@pg.production('command : FOR variable IN expr THEN NEWLINE program ELSE program END')
-@pg.production('command : FOR variable IN expr THEN NEWLINE program END')
+@pg.production('command : FOR varlist IN expr NEWLINE program ELSE NEWLINE program END')
+@pg.production('command : FOR varlist IN expr NEWLINE program END')
 def p_command_for(p):
-    if len(p) > 8:
-        return ('FOR', (p[1], p[3], p[6], p[8]))
+    if len(p) > 7:
+        return ('FOR', (p[1], p[3], p[5], p[8]))
     else:
-        return ('FOR', (p[1], p[3], p[6]))
+        return ('FOR', (p[1], p[3], p[5]))
 
-@pg.production('command : WHILE expr THEN NEWLINE program ELSE program END')
-@pg.production('command : WHILE expr THEN NEWLINE program END')
+@pg.production('command : WHILE expr NEWLINE program ELSE NEWLINE program END')
+@pg.production('command : WHILE expr NEWLINE program END')
 def p_command_while(p):
-    if len(p) > 6:
-        return ('WHILE', (p[1], p[4], p[6]))
+    if len(p) > 5:
+        return ('WHILE', (p[1], p[3], p[6]))
     else:
-        return ('WHILE', (p[1], p[4]))
+        return ('WHILE', (p[1], p[3]))
 
-@pg.production('command : ELIF expr THEN')
+@pg.production('command : ELIF expr')
 def p_command_elif(p):
     return ('ELIF', p[1])
 
-@pg.production('command : IF expr THEN NEWLINE program ELSE program END')
-@pg.production('command : IF expr THEN NEWLINE program END')
+@pg.production('command : IF expr NEWLINE program ELSE NEWLINE program END')
+@pg.production('command : IF expr NEWLINE program END')
 def p_command_if(p):
-    if len(p) > 6:
-        return ('IF', (p[1], p[4], p[6]))
+    if len(p) > 5:
+        return ('IF', (p[1], p[3], p[6]))
     else:
-        return ('IF', (p[1], p[4]))
+        return ('IF', (p[1], p[3]))
 
-@pg.production('command : variable ASSIGN expr')
+@pg.production('command : varlist ASSIGN expr')
 def p_command_assign(p):
     return ('ASSIGN', (p[0], p[2]))
+
+@pg.production('command : PUTS expr')
+def p_command_puts(p):
+    return ('PUTS', p[1])
 
 @pg.production('command : expr')
 def p_command_expr(p):
@@ -113,44 +117,30 @@ def p_expr_logic(p):
 def p_expr_parens(p):
     return ('PARENS', p[1])
 
+@pg.production('expr : variable LPAR arglist RPAR')
 @pg.production('expr : variable LPAR RPAR')
-@pg.production('expr : variable tuple')
 def p_expr_function(p):
-    if len(p) > 2:
-        return ('FUNC', (p[0], ))
+    if len(p) > 3:
+        return ('FUNC', (p[0], p[2]))
     else:
-        return ('FUNC', (p[0], p[1]))
+        return ('FUNC', (p[0], ))
 
 @pg.production('expr : NUMBER')
 @pg.production('expr : STRING')
 def p_expr_constant(p):
     return (p[0].gettokentype(), eval(p[0].getstr()))
 
+@pg.production('expr : list')
+def p_expr_list(p):
+    return p[0]
+
+@pg.production('expr : slice')
+def p_expr_slice(p):
+    return p[0]
+
 @pg.production('expr : variable')
 def p_expr_variable(p):
     return p[0]
-
-@pg.production('expr : tuple')
-@pg.production('expr : list')
-def p_expr_sequence(p):
-    return p[0]
-
-@pg.production('tuple : rtuple RPAR')
-def p_tuple(p):
-    return ('TUPLE', p[0])
-
-@pg.production('rtuple : rtuple COMMA expr')
-@pg.production('rtuple : ltuple expr')
-def p_rtuple(p):
-    if len(p) > 2:
-        p[0].append(p[2])
-    else:
-        p[0].append(p[1])
-    return p[0]
-
-@pg.production('ltuple : LPAR expr COMMA')
-def p_ltuple(p):
-    return [p[1]]
 
 @pg.production('list : rlist RSQB')
 def p_list(p):
@@ -168,6 +158,69 @@ def p_rlist(p):
 @pg.production('llist : LSQB expr COMMA')
 def p_llist(p):
     return [p[1]]
+
+@pg.production('slice : expr LSQB slicelist RSQB')
+def p_slice(p):
+    return ('SLICE', (p[0], p[2]))
+
+@pg.production('slicelist : slicelist COMMA slicexpr')
+@pg.production('slicelist : slicexpr')
+def p_slicelist(p):
+    if len(p) > 1:
+        p[0].append(p[2])
+        return p[0]
+    else:
+        return [p[0]]
+
+@pg.production('slicexpr : expr COLON expr COLON expr')
+@pg.production('slicexpr : expr COLON expr COLON')
+@pg.production('slicexpr : expr COLON COLON expr')
+@pg.production('slicexpr : expr COLON expr')
+@pg.production('slicexpr : expr COLON COLON')
+@pg.production('slicexpr : expr COLON')
+@pg.production('slicexpr : expr')
+@pg.production('slicexpr : COLON expr COLON expr')
+@pg.production('slicexpr : COLON expr COLON')
+@pg.production('slicexpr : COLON COLON expr')
+@pg.production('slicexpr : COLON expr')
+def p_slicexpr(p):
+    return [item for item in p]
+
+@pg.production('paralist : paralist COMMA parameter')
+@pg.production('paralist : parameter')
+def p_paralist(p):
+    if len(p) > 1:
+        _, items = p[0]
+        items.append(p[2])
+        return ('PARALIST', items)
+    else:
+        return ('PARALIST', [p[0]])
+
+@pg.production('parameter : variable ASSIGN expr')
+@pg.production('parameter : variable')
+def p_parameter(p):
+    if len(p) > 1:
+        return (p[0], p[2])
+    else:
+        return (p[0], )
+
+@pg.production('arglist : arglist COMMA argument')
+@pg.production('arglist : argument')
+def p_arglist(p):
+    if len(p) > 1:
+        _, items = p[0]
+        items.append(p[2])
+        return ('ARGLIST', items)
+    else:
+        return ('ARGLIST', [p[0]])
+
+@pg.production('argument : variable ASSIGN expr')
+@pg.production('argument : expr')
+def p_argument(p):
+    if len(p) > 1:
+        return (p[0], p[2])
+    else:
+        return (p[0], )
 
 @pg.production('varlist : varlist COMMA variable')
 @pg.production('varlist : variable')
