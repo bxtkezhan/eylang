@@ -125,10 +125,9 @@ def p_expr_function(p):
     else:
         return ('FUNC', (p[0], ))
 
-@pg.production('expr : NUMBER')
-@pg.production('expr : STRING')
-def p_expr_constant(p):
-    return (p[0].gettokentype(), eval(p[0].getstr()))
+@pg.production('expr : dict')
+def p_expr_dict(p):
+    return p[0]
 
 @pg.production('expr : list')
 def p_expr_list(p):
@@ -142,22 +141,54 @@ def p_expr_slice(p):
 def p_expr_variable(p):
     return p[0]
 
-@pg.production('list : rlist RSQB')
-def p_list(p):
-    return ('LIST', p[0])
+@pg.production('expr : NUMBER')
+@pg.production('expr : STRING')
+def p_expr_constant(p):
+    return (p[0].gettokentype(), eval(p[0].getstr()))
 
-@pg.production('rlist : rlist COMMA expr')
-@pg.production('rlist : llist expr')
-def p_rlist(p):
+@pg.production('dict : LBRACE pairlist RBRACE')
+@pg.production('dict : LBRACE RBRACE')
+def p_dict(p):
     if len(p) > 2:
-        p[0].append(p[2])
+        return ('DICT', p[1])
     else:
-        p[0].append(p[1])
-    return p[0]
+        return ('DICT', {})
 
-@pg.production('llist : LSQB expr COMMA')
-def p_llist(p):
-    return [p[1]]
+@pg.production('pairlist : pairlist COMMA pair')
+@pg.production('pairlist : pair')
+def p_pairlist(p):
+    if len(p) > 1:
+        key, value = p[2]
+        p[0][key] = value
+        return p[0]
+    else:
+        key, value = p[0]
+        return {key: value}
+
+@pg.production('pair : expr COLON expr')
+@pg.production('pair : expr')
+def p_pair(p):
+    if len(p) > 1:
+        return (p[0], p[2])
+    else:
+        return (p[0], None)
+
+@pg.production('list : LSQB listexpr RSQB')
+@pg.production('list : LSQB RSQB')
+def p_list(p):
+    if len(p) > 2:
+        return ('LIST', p[1])
+    else:
+        return ('LIST', [])
+
+@pg.production('listexpr : listexpr COMMA expr')
+@pg.production('listexpr : expr')
+def p_listexpr(p):
+    if len(p) > 1:
+        p[0].append(p[2])
+        return p[0]
+    else:
+        return [p[0]]
 
 @pg.production('slice : expr LSQB slicelist RSQB')
 def p_slice(p):

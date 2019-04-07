@@ -7,6 +7,7 @@ code = '''\
 #! /usr/bin/env dragon
 我 = 123 % 1.23\\
 {}
+.
 I = 123 / 123j'''
 print('```')
 print(code)
@@ -16,18 +17,16 @@ for token in lexer.lex(code):
 
 print('- ' * 32)
 code = '''\
-def myfunc(a, b=3, c=5)
-    return a + b + c
+#! /usr/bin/env dragon
+
+def myfunc(a, b, k=10)
+    c = a + b
+    c = c * k
+    return c
 end
 
-for i in range(0, 100, step=3)
-    puts myfunc(a=1, b=2, 3)
-else
-    a = 1 + 1
-end
-a = [1, [1, [1, 2, 3], 3], 3]
-
-10 * [10, 10]
+list = [1, 2, 3]
+list = list + [1, 2, 3]
 '''
 print('```')
 print(code)

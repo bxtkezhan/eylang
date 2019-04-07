@@ -30,6 +30,7 @@ rules = [
     ['GE', r'>='],
     ['GT', r'>'],
     ['NE', r'!='],
+    ['DOT', r'\.'],
     ['COMMA', r'\,'],
     ['COLON', r':'],
     ['ASSIGN', r'='],
