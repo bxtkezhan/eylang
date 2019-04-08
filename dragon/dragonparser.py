@@ -117,34 +117,25 @@ def p_expr_logic(p):
 def p_expr_parens(p):
     return ('PARENS', p[1])
 
-@pg.production('expr : variable LPAR arglist RPAR')
-@pg.production('expr : variable LPAR RPAR')
-def p_expr_function(p):
+@pg.production('expr : func')
+@pg.production('expr : dict')
+@pg.production('expr : list')
+@pg.production('expr : slice')
+@pg.production('expr : attrivar')
+@pg.production('expr : variable')
+@pg.production('expr : constant')
+def p_expr_object(p):
+    return p[0]
+
+@pg.production('func : variable LPAR arglist RPAR')
+@pg.production('func : attrivar LPAR arglist RPAR')
+@pg.production('func : variable LPAR RPAR')
+@pg.production('func : attrivar LPAR RPAR')
+def p_func(p):
     if len(p) > 3:
         return ('FUNC', (p[0], p[2]))
     else:
         return ('FUNC', (p[0], ))
-
-@pg.production('expr : dict')
-def p_expr_dict(p):
-    return p[0]
-
-@pg.production('expr : list')
-def p_expr_list(p):
-    return p[0]
-
-@pg.production('expr : slice')
-def p_expr_slice(p):
-    return p[0]
-
-@pg.production('expr : variable')
-def p_expr_variable(p):
-    return p[0]
-
-@pg.production('expr : NUMBER')
-@pg.production('expr : STRING')
-def p_expr_constant(p):
-    return (p[0].gettokentype(), eval(p[0].getstr()))
 
 @pg.production('dict : LBRACE pairlist RBRACE')
 @pg.production('dict : LBRACE RBRACE')
@@ -253,7 +244,9 @@ def p_argument(p):
     else:
         return (p[0], )
 
+@pg.production('varlist : varlist COMMA attrivar')
 @pg.production('varlist : varlist COMMA variable')
+@pg.production('varlist : attrivar')
 @pg.production('varlist : variable')
 def p_varlist(p):
     if len(p) > 1:
@@ -263,8 +256,23 @@ def p_varlist(p):
     else:
         return ('VARLIST', [p[0]])
 
+@pg.production('attrivar : func DOT variable')
+@pg.production('attrivar : dict DOT variable')
+@pg.production('attrivar : list DOT variable')
+@pg.production('attrivar : slice DOT variable')
+@pg.production('attrivar : attrivar DOT variable')
+@pg.production('attrivar : variable DOT variable')
+@pg.production('attrivar : constant DOT variable')
+def p_attrivar(p):
+    return ('ATTR', (p[0], p[2]))
+
 @pg.production('variable : NAME')
 def p_variable(p):
     return ('VARIABLE', p[0].getstr())
+
+@pg.production('constant : NUMBER')
+@pg.production('constant : STRING')
+def p_constant(p):
+    return (p[0].gettokentype(), eval(p[0].getstr()))
 
 parser = pg.build()
