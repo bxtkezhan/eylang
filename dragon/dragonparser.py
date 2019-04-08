@@ -34,6 +34,10 @@ def p_statement(p):
 def p_statement_newline(p):
     return (p[0].getsourcepos().lineno, (p[0].gettokentype(), None))
 
+@pg.production('command : IMPORT expr')
+def p_command_return(p):
+    return ('IMPORT', p[1])
+
 @pg.production('command : RETURN expr')
 def p_command_return(p):
     return ('RETURN', p[1])
@@ -164,22 +168,24 @@ def p_pair(p):
     else:
         return (p[0], None)
 
-@pg.production('list : LSQB listexpr RSQB')
+@pg.production('list : LSQB exprlist RSQB')
 @pg.production('list : LSQB RSQB')
 def p_list(p):
     if len(p) > 2:
-        return ('LIST', p[1])
+        _, items = p[1]
+        return ('LIST', items)
     else:
         return ('LIST', [])
 
-@pg.production('listexpr : listexpr COMMA expr')
-@pg.production('listexpr : expr')
-def p_listexpr(p):
+@pg.production('exprlist : exprlist COMMA expr')
+@pg.production('exprlist : expr')
+def p_exprlist(p):
     if len(p) > 1:
-        p[0].append(p[2])
-        return p[0]
+        _, items = p[0]
+        items.append(p[2])
+        return ('EXPRLIST', items)
     else:
-        return [p[0]]
+        return ('EXPRLIST', [p[0]])
 
 @pg.production('slice : expr LSQB slicelist RSQB')
 def p_slice(p):
