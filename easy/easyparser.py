@@ -1,7 +1,10 @@
-from .dragonlexer import reserved
-from .dragonlexer import rules as lex_rules
+from .easylexer import reserved
+from .easylexer import rules as lex_rules
+from .easyinterpreter import *
 from rply import ParserGenerator
 
+
+EASY_VARS = {}
 
 pg = ParserGenerator(
     list(reserved.values()) + [name for name, _ in lex_rules],
@@ -20,10 +23,10 @@ pg = ParserGenerator(
 def p_program(p):
     if len(p) == 1:
         line, stat = p[0]
-        return {line: stat}
+        return Program({line: stat})
     elif len(p) == 2:
         line, stat = p[1]
-        p[0][line] = stat
+        p[0].set(line, stat)
         return p[0]
 
 @pg.production('statement : command NEWLINE')
@@ -80,7 +83,7 @@ def p_command_if(p):
 
 @pg.production('command : varlist ASSIGN expr')
 def p_command_assign(p):
-    return ('ASSIGN', (p[0], p[2]))
+    return Assign(p[0], p[2])
 
 @pg.production('command : PUTS expr')
 def p_command_puts(p):
@@ -88,7 +91,7 @@ def p_command_puts(p):
 
 @pg.production('command : expr')
 def p_command_expr(p):
-    return ('EXPR', p[0])
+    return Expr(p[0])
 
 @pg.production('expr : expr PLUS expr')
 @pg.production('expr : expr MINUS expr')
@@ -96,17 +99,14 @@ def p_command_expr(p):
 @pg.production('expr : expr DIV expr')
 @pg.production('expr : expr MOD expr')
 @pg.production('expr : expr POWER expr')
-def p_expr_binop(p):
-    return (p[1].gettokentype(), (p[0], p[2]))
-
 @pg.production('expr : expr EQ expr')
 @pg.production('expr : expr LT expr')
 @pg.production('expr : expr LE expr')
 @pg.production('expr : expr GT expr')
 @pg.production('expr : expr GE expr')
 @pg.production('expr : expr NE expr')
-def p_expr_relop(p):
-    return (p[1].gettokentype(), (p[0], p[2]))
+def p_expr_binop(p):
+    return BinOp(p[1], p[0], p[2])
 
 @pg.production('expr : expr AND expr')
 @pg.production('expr : expr OR expr')
@@ -119,7 +119,7 @@ def p_expr_logic(p):
 
 @pg.production('expr : LPAR expr RPAR')
 def p_expr_parens(p):
-    return ('PARENS', p[1])
+    return Parens(p[1])
 
 @pg.production('expr : func')
 @pg.production('expr : dict')
@@ -256,11 +256,10 @@ def p_argument(p):
 @pg.production('varlist : variable')
 def p_varlist(p):
     if len(p) > 1:
-        _, items = p[0]
-        items.append(p[2])
-        return ('VARLIST', items)
+        p[0].append(p[2])
+        return p[0]
     else:
-        return ('VARLIST', [p[0]])
+        return VarList([p[0]])
 
 @pg.production('attrivar : func DOT variable')
 @pg.production('attrivar : dict DOT variable')
@@ -270,15 +269,15 @@ def p_varlist(p):
 @pg.production('attrivar : variable DOT variable')
 @pg.production('attrivar : constant DOT variable')
 def p_attrivar(p):
-    return ('ATTR', (p[0], p[2]))
+    return ('ATTRIVAR', (p[0], p[2]))
 
 @pg.production('variable : NAME')
 def p_variable(p):
-    return ('VARIABLE', p[0].getstr())
+    return Variable(p[0], var_dict=EASY_VARS)
 
 @pg.production('constant : NUMBER')
 @pg.production('constant : STRING')
 def p_constant(p):
-    return (p[0].gettokentype(), eval(p[0].getstr()))
+    return Constant(p[0])
 
 parser = pg.build()
