@@ -14,7 +14,7 @@ pg = ParserGenerator(
         ('left', ['PLUS', 'MINUS']),
         ('left', ['MUL', 'DIV', 'MOD']),
         ('left', ['POWER']),
-        ('left', ['UMINUS']),
+        ('right', ['SIGN']),
     ]
 )
 
@@ -87,7 +87,7 @@ def p_command_assign(p):
 
 @pg.production('command : PUTS expr')
 def p_command_puts(p):
-    return ('PUTS', p[1])
+    return Puts(p[1])
 
 @pg.production('command : expr')
 def p_command_expr(p):
@@ -106,7 +106,12 @@ def p_command_expr(p):
 @pg.production('expr : expr GE expr')
 @pg.production('expr : expr NE expr')
 def p_expr_binop(p):
-    return BinOp(p[1], p[0], p[2])
+    return BinaryOp(p[1], p[0], p[2])
+
+@pg.production('expr : PLUS expr', precedence='SIGN')
+@pg.production('expr : MINUS expr', precedence='SIGN')
+def p_expr_sign(p):
+    return Sign(p[0], p[1])
 
 @pg.production('expr : expr AND expr')
 @pg.production('expr : expr OR expr')
@@ -124,7 +129,7 @@ def p_expr_parens(p):
 @pg.production('expr : func')
 @pg.production('expr : dict')
 @pg.production('expr : list')
-@pg.production('expr : slice')
+@pg.production('expr : index')
 @pg.production('expr : attrivar')
 @pg.production('expr : variable')
 @pg.production('expr : constant')
@@ -145,9 +150,9 @@ def p_func(p):
 @pg.production('dict : LBRACE RBRACE')
 def p_dict(p):
     if len(p) > 2:
-        return ('DICT', p[1])
+        return Dictionary(p[1])
     else:
-        return ('DICT', {})
+        return Dictionary()
 
 @pg.production('pairlist : pairlist COMMA pair')
 @pg.production('pairlist : pair')
@@ -172,46 +177,44 @@ def p_pair(p):
 @pg.production('list : LSQB RSQB')
 def p_list(p):
     if len(p) > 2:
-        _, items = p[1]
-        return ('LIST', items)
+        return List(p[1])
     else:
-        return ('LIST', [])
+        return List()
 
 @pg.production('exprlist : exprlist COMMA expr')
 @pg.production('exprlist : expr')
 def p_exprlist(p):
-    if len(p) > 1:
-        _, items = p[0]
-        items.append(p[2])
-        return ('EXPRLIST', items)
-    else:
-        return ('EXPRLIST', [p[0]])
-
-@pg.production('slice : expr LSQB slicelist RSQB')
-def p_slice(p):
-    return ('SLICE', (p[0], p[2]))
-
-@pg.production('slicelist : slicelist COMMA slicexpr')
-@pg.production('slicelist : slicexpr')
-def p_slicelist(p):
     if len(p) > 1:
         p[0].append(p[2])
         return p[0]
     else:
         return [p[0]]
 
-@pg.production('slicexpr : expr COLON expr COLON expr')
-@pg.production('slicexpr : expr COLON expr COLON')
-@pg.production('slicexpr : expr COLON COLON expr')
-@pg.production('slicexpr : expr COLON expr')
-@pg.production('slicexpr : expr COLON COLON')
-@pg.production('slicexpr : expr COLON')
-@pg.production('slicexpr : expr')
-@pg.production('slicexpr : COLON expr COLON expr')
-@pg.production('slicexpr : COLON expr COLON')
-@pg.production('slicexpr : COLON COLON expr')
-@pg.production('slicexpr : COLON expr')
-def p_slicexpr(p):
+@pg.production('index : expr LSQB indexlist RSQB')
+def p_index(p):
+    return ('INDEX', (p[0], p[2]))
+
+@pg.production('indexlist : indexlist COMMA indexexpr')
+@pg.production('indexlist : indexexpr')
+def p_indexlist(p):
+    if len(p) > 1:
+        p[0].append(p[2])
+        return p[0]
+    else:
+        return [p[0]]
+
+@pg.production('indexexpr : expr COLON expr COLON expr')
+@pg.production('indexexpr : expr COLON expr COLON')
+@pg.production('indexexpr : expr COLON COLON expr')
+@pg.production('indexexpr : expr COLON expr')
+@pg.production('indexexpr : expr COLON COLON')
+@pg.production('indexexpr : expr COLON')
+@pg.production('indexexpr : expr')
+@pg.production('indexexpr : COLON expr COLON expr')
+@pg.production('indexexpr : COLON expr COLON')
+@pg.production('indexexpr : COLON COLON expr')
+@pg.production('indexexpr : COLON expr')
+def p_indexexpr(p):
     return [item for item in p]
 
 @pg.production('paralist : paralist COMMA parameter')
@@ -264,12 +267,12 @@ def p_varlist(p):
 @pg.production('attrivar : func DOT variable')
 @pg.production('attrivar : dict DOT variable')
 @pg.production('attrivar : list DOT variable')
-@pg.production('attrivar : slice DOT variable')
+@pg.production('attrivar : index DOT variable')
 @pg.production('attrivar : attrivar DOT variable')
 @pg.production('attrivar : variable DOT variable')
 @pg.production('attrivar : constant DOT variable')
 def p_attrivar(p):
-    return ('ATTRIVAR', (p[0], p[2]))
+    return Attribute(p[0], p[2], var_dict=EASY_VARS)
 
 @pg.production('variable : NAME')
 def p_variable(p):

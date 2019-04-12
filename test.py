@@ -16,6 +16,9 @@ end
 matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
 a = 100 + myfunc(10, 20).x.float() + myfunc(100, 200).y.float() * 10
+-1 * myfunc()
+1 +++1 + 1
+a[::1][:1][0]
 '''
 print('```')
 print(code)
@@ -25,13 +28,26 @@ pprint.pprint((parser.parse(lexer.lex(code))))
 print('- ' * 32)
 
 code = '''\
-a, b, c = "abc"
-k = a * 10 + "-" + b * 10 + "-" + c * 10 + "-" + (a + b + c) * 10
-k
+vect2d = {}
+vect2d.x = 10
+vect2d.y = 10
+vect2d.x + vect2d.y
+puts 'hello world'
+puts (3 + 2j) * 5
+puts vect2d
+puts -1 * 100
+puts 1 --- 1 + 1
+x, y = [1, 2]
+puts [x, y]
+a, b, c = [2^10, 1 + 10j, [1, 2, 3]]
+puts a
+puts b
+puts c
 '''
 print('```')
 print(code)
 print('```')
 pprint.pprint((parser.parse(lexer.lex(code))))
-print('\nresult:')
-print(parser.parse(lexer.lex(code)).eval())
+print('```')
+parser.parse(lexer.lex(code)).eval()
+print('```')

@@ -11,9 +11,6 @@ class Constant(BaseBox):
     def __repr__(self):
         return '{!r}'.format(self.value)
 
-    def __str__(self):
-        return '{}'.format(self.value)
-
 class Variable(BaseBox):
     def __init__(self, name, var_dict):
         self.name = name.getstr()
@@ -28,8 +25,20 @@ class Variable(BaseBox):
     def __repr__(self):
         return '{}'.format(self.name)
 
-    def __str__(self):
-        return '{}'.format(self.name)
+class Attribute(BaseBox):
+    def __init__(self, obj, attr, var_dict):
+        self.obj = obj
+        self.attr = attr
+        self.var_dict = var_dict
+
+    def set(self, value):
+        self.obj.eval()[self.attr.name] = value
+
+    def eval(self):
+        return self.obj.eval()[self.attr.name]
+
+    def __repr__(self):
+        return '{}.{}'.format(self.obj, self.attr)
 
 class VarList(BaseBox):
     def __init__(self, varlist=[]):
@@ -44,8 +53,31 @@ class VarList(BaseBox):
     def __repr__(self):
         return ', '.join(map(str, self.varlist))
 
-    def __str__(self):
-        return ', '.join(map(str, self.varlist))
+class List(BaseBox):
+    def __init__(self, exprlist):
+        self.exprlist = exprlist
+
+    def eval(self):
+        return [expr.eval() for expr in self.exprlist]
+
+    def __repr__(self):
+        return '{!r}'.format(self.exprlist)
+
+class Dictionary(BaseBox):
+    def __init__(self, pairlist={}):
+        self.pairlist = pairlist
+
+    def set(self, key, value):
+        self.pairlist[key.eval()] = value.eval()
+
+    def get(self, key):
+        return self.pairlist[key.eval()]
+
+    def eval(self):
+        return {key.eval(): value.eval() for key, value in self.pairlist.items()}
+
+    def __repr__(self):
+        return '{!r}'.format(self.pairlist)
 
 class Parens(BaseBox):
     def __init__(self, expr):
@@ -57,10 +89,21 @@ class Parens(BaseBox):
     def __repr__(self):
         return '({!r})'.format(self.expr)
 
-    def __str__(self):
-        return '{}'.format(self.expr)
+class Sign(BaseBox):
+    def __init__(self, opt, expr):
+        self.opt = opt.getstr()
+        self.expr = expr
 
-class BinOp(BaseBox):
+    def eval(self):
+        if self.opt == '+':
+            return + self.expr.eval()
+        elif self.opt == '-':
+            return - self.expr.eval()
+
+    def __repr__(self):
+        return '{}{!r}'.format(self.opt, self.expr)
+
+class BinaryOp(BaseBox):
     def __init__(self, opt, left, right):
         self.opt = opt.getstr()
         self.left = left
@@ -95,9 +138,6 @@ class BinOp(BaseBox):
     def __repr__(self):
         return '{!r} {} {!r}'.format(self.left, self.opt, self.right)
 
-    def __str__(self):
-        return '{} {} {}'.format(self.left, self.opt, self.right)
-
 class Expr(BaseBox):
     def __init__(self, expr):
         self.expr = expr
@@ -106,10 +146,7 @@ class Expr(BaseBox):
         return self.expr.eval()
 
     def __repr__(self):
-        return '(EXPR: {!r})'.format(self.expr)
-
-    def __str__(self):
-        return '{}'.format(self.expr)
+        return '{!r}'.format(self.expr)
 
 class Assign(BaseBox):
     def __init__(self, varlist, expr):
@@ -126,10 +163,17 @@ class Assign(BaseBox):
                 varlist[i].set(value)
 
     def __repr__(self):
-        return '(ASSIGN: {} = {!r})'.format(self.varlist, self.expr)
+        return '{} = {!r}'.format(self.varlist, self.expr)
 
-    def __str__(self):
-        return '{} = {}'.format(self.varlist, self.expr)
+class Puts(BaseBox):
+    def __init__(self, expr):
+        self.expr = expr
+
+    def eval(self):
+        print(self.expr.eval())
+
+    def __repr__(self):
+        return 'puts {!r}'.format(self.expr)
 
 class Program(BaseBox):
     def __init__(self, statements={}):
@@ -145,8 +189,5 @@ class Program(BaseBox):
         return self.statements[lines[-1]].eval()
 
     def __repr__(self):
-        return '\n'.join('{}: {!r}'.format(line, self.statements[line])
+        return '\n'.join('{}. {!r}'.format(line, self.statements[line])
                 for line in sorted(self.statements.keys()))
-
-    def __str__(self):
-        return '{}'.format(self.statements)
