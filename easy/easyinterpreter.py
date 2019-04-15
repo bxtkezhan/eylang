@@ -1,4 +1,5 @@
 from rply.token import BaseBox
+from rply.token import Token
 
 
 class Constant(BaseBox):
@@ -52,6 +53,33 @@ class VarList(BaseBox):
 
     def __repr__(self):
         return ', '.join(map(str, self.varlist))
+
+class Index(BaseBox):
+    def __init__(self, expr, indexlist):
+        self.expr = expr
+        self.indexlist = indexlist
+
+    def parseindex(self, index):
+        if len(index) == 1:
+                return index[0].eval()
+        else:
+            return slice(*((item.eval() if item else None) for item in index))
+
+    def eval(self):
+        if len(self.indexlist) == 1:
+            return self.expr.eval()[self.parseindex(self.indexlist[0])]
+        return self.expr.eval()[[self.parseindex(index) for index in self.indexlist]]
+
+    def index2str(self, index):
+        if len(index) == 1:
+                return repr(index[0])
+        else:
+            return 'slice({})'.format(','.join(repr(item) for item in index))
+
+    def __repr__(self):
+        if len(self.indexlist) == 1:
+            return '{!r}[{}]'.format(self.expr, self.index2str(self.indexlist[0]))
+        return '{!r}[{}]'.format(self.expr, ', '.join(self.index2str(index) for index in self.indexlist))
 
 class List(BaseBox):
     def __init__(self, exprlist):

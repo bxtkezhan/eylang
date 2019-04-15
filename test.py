@@ -40,9 +40,15 @@ puts 1 --- 1 + 1
 x, y = [1, 2]
 puts [x, y]
 a, b, c = [2^10, 1 + 10j, [1, 2, 3]]
+l = [0, 1, 2, 3, 4, 5, 'a', 'b', 'c']
 puts a
 puts b
 puts c
+puts l[5]
+puts l[3:8]
+puts l[3:-1]
+puts l[3::-1]
+puts l[8:3:-1]
 '''
 print('```')
 print(code)

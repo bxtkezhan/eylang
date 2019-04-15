@@ -192,7 +192,7 @@ def p_exprlist(p):
 
 @pg.production('index : expr LSQB indexlist RSQB')
 def p_index(p):
-    return ('INDEX', (p[0], p[2]))
+    return Index(p[0], p[2])
 
 @pg.production('indexlist : indexlist COMMA indexexpr')
 @pg.production('indexlist : indexexpr')
@@ -204,18 +204,31 @@ def p_indexlist(p):
         return [p[0]]
 
 @pg.production('indexexpr : expr COLON expr COLON expr')
+def p_indexexprc(p): return (p[0], p[2], p[4])
 @pg.production('indexexpr : expr COLON expr COLON')
+def p_indexexprb(p): return (p[0], p[2], None)
 @pg.production('indexexpr : expr COLON COLON expr')
-@pg.production('indexexpr : expr COLON expr')
-@pg.production('indexexpr : expr COLON COLON')
-@pg.production('indexexpr : expr COLON')
-@pg.production('indexexpr : expr')
+def p_indexexpra(p): return (p[0], None, p[3])
 @pg.production('indexexpr : COLON expr COLON expr')
+def p_indexexpr9(p): return (None, p[1], p[3])
 @pg.production('indexexpr : COLON expr COLON')
+def p_indexexpr8(p): return (None, p[1], None)
 @pg.production('indexexpr : COLON COLON expr')
+def p_indexexpr7(p): return (None, None, p[2])
+@pg.production('indexexpr : expr COLON COLON')
+def p_indexexpr6(p): return (p[0], None, None)
+@pg.production('indexexpr : expr COLON expr')
+def p_indexexpr5(p): return (p[0], p[2], None)
+@pg.production('indexexpr : COLON COLON')
+def p_indexexpr4(p): return (None, None, None)
+@pg.production('indexexpr : expr COLON')
+def p_indexexpr3(p): return (p[0], None, None)
 @pg.production('indexexpr : COLON expr')
-def p_indexexpr(p):
-    return [item for item in p]
+def p_indexexpr2(p): return (None, p[1], None)
+@pg.production('indexexpr : COLON')
+def p_indexexpr1(p): return (None, None, None)
+@pg.production('indexexpr : expr')
+def p_indexexpr0(p): return (p[0], )
 
 @pg.production('paralist : paralist COMMA parameter')
 @pg.production('paralist : parameter')
