@@ -33,10 +33,10 @@ class Attribute(BaseBox):
         self.var_dict = var_dict
 
     def set(self, value):
-        self.obj.eval()[self.attr.name] = value
+        setattr(self.obj.eval(), self.attr.name, value)
 
     def eval(self):
-        return self.obj.eval()[self.attr.name]
+        return getattr(self.obj.eval(), self.attr.name)
 
     def __repr__(self):
         return '{}.{}'.format(self.obj, self.attr)
@@ -106,6 +106,23 @@ class Dictionary(BaseBox):
 
     def __repr__(self):
         return '{!r}'.format(self.pairlist)
+
+class Func(BaseBox):
+    def __init__(self, obj, arglist=None):
+        self.obj = obj
+        self.arglist = arglist
+
+    def eval(self):
+        if self.arglist is not None:
+            return self.obj.eval()(arglist)
+        else:
+            return self.obj.eval()()
+
+    def __repr__(self):
+        if self.arglist is not None:
+            return '{!r}({!r})'.format(self.obj, self.arglist)
+        else:
+            return '{!r}()'.format(self.obj)
 
 class Parens(BaseBox):
     def __init__(self, expr):
@@ -202,6 +219,24 @@ class Puts(BaseBox):
 
     def __repr__(self):
         return 'puts {!r}'.format(self.expr)
+
+class IF(BaseBox):
+    def __init__(self, expr, program1, program2=None):
+        self.expr = expr
+        self.program1 = program1
+        self.program2 = program2
+
+    def eval(self):
+        if self.expr.eval():
+            self.program1.eval()
+        elif self.program2 is not None:
+            self.program2.eval()
+
+    def __repr__(self):
+        if self.program2 is None:
+            return 'if {!r} then\n{!r}\nend'.format(self.expr, self.program1)
+        else:
+            return 'if {!r} then\n{!r}\nelse\n{!r}\nend'.format(self.expr, self.program1, self.program2)
 
 class Program(BaseBox):
     def __init__(self, statements={}):

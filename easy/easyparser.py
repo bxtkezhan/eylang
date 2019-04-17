@@ -15,6 +15,7 @@ pg = ParserGenerator(
         ('left', ['MUL', 'DIV', 'MOD']),
         ('left', ['POWER']),
         ('right', ['SIGN']),
+        ('left', ['LSQB', 'DOT']),
     ]
 )
 
@@ -77,9 +78,9 @@ def p_command_elif(p):
 @pg.production('command : IF expr NEWLINE program END')
 def p_command_if(p):
     if len(p) > 5:
-        return ('IF', (p[1], p[3], p[6]))
+        return IF(p[1], p[3], p[6])
     else:
-        return ('IF', (p[1], p[3]))
+        return IF(p[1], p[3])
 
 @pg.production('command : varlist ASSIGN expr')
 def p_command_assign(p):
@@ -142,9 +143,9 @@ def p_expr_object(p):
 @pg.production('func : attrivar LPAR RPAR')
 def p_func(p):
     if len(p) > 3:
-        return ('FUNC', (p[0], p[2]))
+        return Func(p[0], p[2])
     else:
-        return ('FUNC', (p[0], ))
+        return Func(p[0])
 
 @pg.production('dict : LBRACE pairlist RBRACE')
 @pg.production('dict : LBRACE RBRACE')
@@ -277,13 +278,7 @@ def p_varlist(p):
     else:
         return VarList([p[0]])
 
-@pg.production('attrivar : func DOT variable')
-@pg.production('attrivar : dict DOT variable')
-@pg.production('attrivar : list DOT variable')
-@pg.production('attrivar : index DOT variable')
-@pg.production('attrivar : attrivar DOT variable')
-@pg.production('attrivar : variable DOT variable')
-@pg.production('attrivar : constant DOT variable')
+@pg.production('attrivar : expr DOT variable')
 def p_attrivar(p):
     return Attribute(p[0], p[2], var_dict=EASY_VARS)
 
