@@ -28,18 +28,11 @@ pprint.pprint((parser.parse(lexer.lex(code))))
 print('- ' * 32)
 
 code = '''\
-a = [1, 2, 3]
-if a.__len__() >= 3
-    puts a[-1]
+for i, j in [[1, 2], [2, 3], [3, 4]]
+    puts [i, j]
 else
-    puts a[0]
+    puts [i, j]
 end
-if (a * 2).__len__() >= 9
-    puts a[-1]
-else
-    puts a + a[::-1]
-end
-puts a + a.__len__()
 '''
 print('```')
 print(code)

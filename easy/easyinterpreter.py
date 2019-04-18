@@ -78,11 +78,11 @@ class Index(BaseBox):
 
     def __repr__(self):
         if len(self.indexlist) == 1:
-            return '{!r}[{}]'.format(self.expr, self.index2str(self.indexlist[0]))
-        return '{!r}[{}]'.format(self.expr, ', '.join(self.index2str(index) for index in self.indexlist))
+            return '({!r}[{}])'.format(self.expr, self.index2str(self.indexlist[0]))
+        return '({!r}[{}])'.format(self.expr, ', '.join(self.index2str(index) for index in self.indexlist))
 
 class List(BaseBox):
-    def __init__(self, exprlist):
+    def __init__(self, exprlist=[]):
         self.exprlist = exprlist
 
     def eval(self):
@@ -237,6 +237,51 @@ class IF(BaseBox):
             return 'if {!r} then\n{!r}\nend'.format(self.expr, self.program1)
         else:
             return 'if {!r} then\n{!r}\nelse\n{!r}\nend'.format(self.expr, self.program1, self.program2)
+
+class While(BaseBox):
+    def __init__(self, expr, program1, program2=None):
+        self.expr = expr
+        self.program1 = program1
+        self.program2 = program2
+
+    def eval(self):
+        while self.expr.eval():
+            self.program1.eval()
+        else:
+            if self.program2 is not None:
+                self.program2.eval()
+
+    def __repr__(self):
+        if self.program2 is None:
+            return 'while {!r} then\n{!r}\nend'.format(self.expr, self.program1)
+        else:
+            return 'while {!r} then\n{!r}\nelse\n{!r}\nend'.format(self.expr, self.program1, self.program2)
+
+class For(BaseBox):
+    def __init__(self, varlist, expr, program1, program2=None):
+        self.varlist = varlist
+        self.expr = expr
+        self.program1 = program1
+        self.program2 = program2
+
+    def eval(self):
+        varlist = self.varlist.eval()
+        for values in self.expr.eval():
+            if len(varlist) == 1:
+                varlist[0].set(values)
+            else:
+                for variable, value in zip(varlist, values):
+                    variable.set(value)
+            self.program1.eval()
+        else:
+            if self.program2 is not None:
+                self.program2.eval()
+
+    def __repr__(self):
+        if self.program2 is None:
+            return 'for {!r} in {!r} then\n{!r}\nend'.format(self.varlist, self.expr, self.program1)
+        else:
+            return 'for {!r} in {!r} then\n{!r}\nelse\n{!r}\nend'.format(self.varlist, self.expr, self.program1, self.program2)
 
 class Program(BaseBox):
     def __init__(self, statements={}):

@@ -15,7 +15,6 @@ pg = ParserGenerator(
         ('left', ['MUL', 'DIV', 'MOD']),
         ('left', ['POWER']),
         ('right', ['SIGN']),
-        ('left', ['LSQB', 'DOT']),
     ]
 )
 
@@ -58,17 +57,17 @@ def p_command_def(p):
 @pg.production('command : FOR varlist IN expr NEWLINE program END')
 def p_command_for(p):
     if len(p) > 7:
-        return ('FOR', (p[1], p[3], p[5], p[8]))
+        return For(p[1], p[3], p[5], p[8])
     else:
-        return ('FOR', (p[1], p[3], p[5]))
+        return For(p[1], p[3], p[5])
 
 @pg.production('command : WHILE expr NEWLINE program ELSE NEWLINE program END')
 @pg.production('command : WHILE expr NEWLINE program END')
 def p_command_while(p):
     if len(p) > 5:
-        return ('WHILE', (p[1], p[3], p[6]))
+        return While(p[1], p[3], p[6])
     else:
-        return ('WHILE', (p[1], p[3]))
+        return While(p[1], p[3])
 
 @pg.production('command : ELIF expr')
 def p_command_elif(p):
@@ -123,19 +122,24 @@ def p_expr_logic(p):
     else:
         return (p[0].gettokentype(), (p[1], ))
 
-@pg.production('expr : LPAR expr RPAR')
-def p_expr_parens(p):
-    return Parens(p[1])
-
-@pg.production('expr : func')
-@pg.production('expr : dict')
-@pg.production('expr : list')
-@pg.production('expr : index')
-@pg.production('expr : attrivar')
-@pg.production('expr : variable')
-@pg.production('expr : constant')
+@pg.production('expr : object')
 def p_expr_object(p):
     return p[0]
+
+@pg.production('object : parensexpr')
+@pg.production('object : func')
+@pg.production('object : dict')
+@pg.production('object : list')
+@pg.production('object : index')
+@pg.production('object : attrivar')
+@pg.production('object : variable')
+@pg.production('object : constant')
+def p_object(p):
+    return p[0]
+
+@pg.production('parensexpr : LPAR expr RPAR')
+def p_parensexpr(p):
+    return Parens(p[1])
 
 @pg.production('func : variable LPAR arglist RPAR')
 @pg.production('func : attrivar LPAR arglist RPAR')
@@ -191,7 +195,7 @@ def p_exprlist(p):
     else:
         return [p[0]]
 
-@pg.production('index : expr LSQB indexlist RSQB')
+@pg.production('index : object LSQB indexlist RSQB')
 def p_index(p):
     return Index(p[0], p[2])
 
@@ -278,7 +282,7 @@ def p_varlist(p):
     else:
         return VarList([p[0]])
 
-@pg.production('attrivar : expr DOT variable')
+@pg.production('attrivar : object DOT variable')
 def p_attrivar(p):
     return Attribute(p[0], p[2], var_dict=EASY_VARS)
 
