@@ -19,6 +19,7 @@ a = 100 + myfunc(10, 20).x.float() + myfunc(100, 200).y.float() * 10
 -1 * myfunc()
 1 +++1 + 1
 a + a[::1][:1][0]
+return 1
 '''
 print('```')
 print(code)
@@ -28,11 +29,18 @@ pprint.pprint((parser.parse(lexer.lex(code))))
 print('- ' * 32)
 
 code = '''\
-for i, j in [[1, 2], [2, 3], [3, 4]]
-    puts [i, j]
-else
-    puts [i, j]
+def myfunc()
+    a = 10
+    i = 0
+    while i < 10
+        a = a + i
+        i = i + 1
+    end
+    if a > 10
+        return a
+    end
 end
+puts myfunc()
 '''
 print('```')
 print(code)

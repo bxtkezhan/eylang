@@ -113,10 +113,14 @@ class Func(BaseBox):
         self.arglist = arglist
 
     def eval(self):
-        if self.arglist is not None:
-            return self.obj.eval()(arglist)
-        else:
-            return self.obj.eval()()
+        try:
+            if self.arglist is None:
+                result = self.obj.eval()()
+            else:
+                result = self.obj.eval()(arglist)
+        except ReturnInterrupt as e:
+            result = e.result
+        return result
 
     def __repr__(self):
         if self.arglist is not None:
@@ -282,6 +286,45 @@ class For(BaseBox):
             return 'for {!r} in {!r} then\n{!r}\nend'.format(self.varlist, self.expr, self.program1)
         else:
             return 'for {!r} in {!r} then\n{!r}\nelse\n{!r}\nend'.format(self.varlist, self.expr, self.program1, self.program2)
+
+class EasyFunc:
+    def __init__(self, paralist, program):
+        self.paralist = paralist
+        self.program = program
+
+    def __call__(self, args=None):
+        if args is None:
+            self.program.eval()
+
+class DEF(BaseBox):
+    def __init__(self, variable, program, paralist=None):
+        self.variable = variable
+        self.paralist = paralist
+        self.program = program
+
+    def eval(self):
+        self.variable.set(EasyFunc(self.paralist, self.program))
+
+    def __repr__(self):
+        if self.paralist is None:
+            return 'def {!r}() then\n{!r}\nend'.format(self.variable, self.program)
+        else:
+            return 'def {!r}({!r}) then\n{!r}\nend'.format(self.variable, self.paralist, self.program)
+
+class ReturnInterrupt(Exception):
+    def __init__(self, result):
+        super().__init__(result)
+        self.result = result
+
+class Return(BaseBox):
+    def __init__(self, expr):
+        self.expr = expr
+
+    def eval(self):
+        raise ReturnInterrupt(self.expr.eval())
+
+    def __repr__(self):
+        return 'return {!r}'.format(self.expr)
 
 class Program(BaseBox):
     def __init__(self, statements={}):

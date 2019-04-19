@@ -43,15 +43,15 @@ def p_command_return(p):
 
 @pg.production('command : RETURN expr')
 def p_command_return(p):
-    return ('RETURN', p[1])
+    return Return(p[1])
 
 @pg.production('command : DEF variable LPAR paralist RPAR NEWLINE program END')
 @pg.production('command : DEF variable LPAR RPAR NEWLINE program END')
 def p_command_def(p):
     if len(p) > 7:
-        return ('DEF', (p[1], p[3], p[6]))
+        return DEF(p[1], p[6], p[3])
     else:
-        return ('DEF', (p[1], p[5]))
+        return DEF(p[1], p[5])
 
 @pg.production('command : FOR varlist IN expr NEWLINE program ELSE NEWLINE program END')
 @pg.production('command : FOR varlist IN expr NEWLINE program END')
