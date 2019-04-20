@@ -5,7 +5,7 @@ import pprint
 
 code = '''\
 #!/usr/bin/env eylang
-import 'math.ey'
+# import 'math.ey'
 
 def myfunc(x, y, k=10)
     x = x * k
@@ -29,29 +29,14 @@ pprint.pprint((parser.parse(lexer.lex(code))))
 print('- ' * 32)
 
 code = '''\
-def myfunc()
-    a = 10
-    i = 0
-    while i < 10
-        a = a + i
-        i = i + 1
-    end
-    if a > 10
-        return a
-    end
+def myfunc(a=1, b=10, c=100)
+    puts a
+    puts b
+    puts c
+    return a + b + c
 end
-puts myfunc()
 
-a = 5
-if a > 5
-    a = a - 5 + 3
-    puts a
-elif a > 0
-    a = a - 1
-    puts a
-else
-    puts a
-end
+puts myfunc(10^2, 20, b=100 ^ 0.5, c=1)
 '''
 print('```')
 print(code)

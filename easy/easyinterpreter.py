@@ -117,7 +117,7 @@ class Func(BaseBox):
             if self.arglist is None:
                 result = self.obj.eval()()
             else:
-                result = self.obj.eval()(arglist)
+                result = self.obj.eval()(self.arglist.eval())
         except ReturnInterrupt as e:
             result = e.result
         return result
@@ -320,8 +320,58 @@ class EasyFunc:
         self.program = program
 
     def __call__(self, args=None):
-        if args is None:
-            self.program.eval()
+        self.paralist.eval()
+        if args is not None:
+            args, kwargs = args
+            for i, value in enumerate(args):
+                self.paralist.set(i, value)
+            for variable, value in kwargs:
+                variable.set(value)
+        self.program.eval()
+
+class ParaList:
+    def __init__(self, item=None):
+        self.items = [] if item is None else [item]
+
+    def append(self, item):
+        self.items.append(item)
+
+    def set(self, index, value):
+        self.items[index][0].set(value)
+
+    def eval(self):
+        for item in self.items:
+            if len(item) == 1:
+                item[0].set(None)
+            else:
+                item[0].set(item[1].eval())
+
+    def __repr__(self):
+        args = ', '.join(repr(item[0]) for item in self.items if len(item) == 1)
+        kwargs = ', '.join('{!r}={!r}'.format(item[0], item[1]) for item in self.items if len(item) == 2)
+        return args + ', ' * bool(args) * bool(kwargs) + kwargs
+
+class ArgList:
+    def __init__(self, item=None):
+        self.items = [] if item is None else [item]
+
+    def append(self, item):
+        self.items.append(item)
+
+    def eval(self):
+        args = []
+        kwargs = []
+        for item in self.items:
+            if len(item) == 1:
+                args.append(item[0].eval())
+            else:
+                kwargs.append((item[0], item[1].eval()))
+        return args, kwargs
+
+    def __repr__(self):
+        args = ', '.join(repr(item[0]) for item in self.items if len(item) == 1)
+        kwargs = ', '.join('{!r}={!r}'.format(item[0], item[1]) for item in self.items if len(item) == 2)
+        return args + ', ' * bool(args) * bool(kwargs) + kwargs
 
 class DEF(BaseBox):
     def __init__(self, variable, program, paralist=None):

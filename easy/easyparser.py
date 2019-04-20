@@ -37,9 +37,9 @@ def p_statement(p):
 def p_statement_newline(p):
     return (p[0].getsourcepos().lineno, Newline())
 
-@pg.production('command : IMPORT expr')
-def p_command_return(p):
-    return ('IMPORT', p[1])
+# @pg.production('command : IMPORT expr')
+# def p_command_return(p):
+#     return ('IMPORT', p[1])
 
 @pg.production('command : RETURN expr')
 def p_command_return(p):
@@ -239,11 +239,10 @@ def p_indexexpr0(p): return (p[0], )
 @pg.production('paralist : parameter')
 def p_paralist(p):
     if len(p) > 1:
-        _, items = p[0]
-        items.append(p[2])
-        return ('PARALIST', items)
+        p[0].append(p[2])
+        return p[0]
     else:
-        return ('PARALIST', [p[0]])
+        return ParaList(p[0])
 
 @pg.production('parameter : variable ASSIGN expr')
 @pg.production('parameter : variable')
@@ -257,11 +256,10 @@ def p_parameter(p):
 @pg.production('arglist : argument')
 def p_arglist(p):
     if len(p) > 1:
-        _, items = p[0]
-        items.append(p[2])
-        return ('ARGLIST', items)
+        p[0].append(p[2])
+        return p[0]
     else:
-        return ('ARGLIST', [p[0]])
+        return ArgList(p[0])
 
 @pg.production('argument : variable ASSIGN expr')
 @pg.production('argument : expr')
