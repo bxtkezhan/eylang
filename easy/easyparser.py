@@ -35,7 +35,7 @@ def p_statement(p):
 
 @pg.production('statement : NEWLINE')
 def p_statement_newline(p):
-    return (p[0].getsourcepos().lineno, (p[0].gettokentype(), None))
+    return (p[0].getsourcepos().lineno, Newline())
 
 @pg.production('command : IMPORT expr')
 def p_command_return(p):
@@ -71,7 +71,7 @@ def p_command_while(p):
 
 @pg.production('command : ELIF expr')
 def p_command_elif(p):
-    return ('ELIF', p[1])
+    return ELIF(p[1])
 
 @pg.production('command : IF expr NEWLINE program ELSE NEWLINE program END')
 @pg.production('command : IF expr NEWLINE program END')

@@ -41,6 +41,17 @@ def myfunc()
     end
 end
 puts myfunc()
+
+a = 5
+if a > 5
+    a = a - 5 + 3
+    puts a
+elif a > 0
+    a = a - 1
+    puts a
+else
+    puts a
+end
 '''
 print('```')
 print(code)

@@ -224,6 +224,16 @@ class Puts(BaseBox):
     def __repr__(self):
         return 'puts {!r}'.format(self.expr)
 
+class ELIF(BaseBox):
+    def __init__(self, expr):
+        self.expr = expr
+
+    def eval(self):
+        return self.expr.eval()
+
+    def __repr__(self):
+        return 'elif {!r} then'.format(self.expr)
+
 class IF(BaseBox):
     def __init__(self, expr, program1, program2=None):
         self.expr = expr
@@ -231,10 +241,27 @@ class IF(BaseBox):
         self.program2 = program2
 
     def eval(self):
+        statements = self.program1.statements
+        lines = sorted(statements.keys())
         if self.expr.eval():
-            self.program1.eval()
-        elif self.program2 is not None:
-            self.program2.eval()
+            for line in lines:
+                command = statements[line]
+                if isinstance(command, ELIF): break
+                command.eval()
+        else:
+            elif_content_start = len(lines)
+            for i, line in enumerate(lines):
+                command = statements[line]
+                if isinstance(command, ELIF) and command.eval():
+                    elif_content_start = i + 1
+                    break
+            if elif_content_start < len(lines):
+                for line in lines[elif_content_start:]:
+                    command = statements[line]
+                    if isinstance(command, ELIF): break
+                    command.eval()
+            elif self.program2 is not None:
+                self.program2.eval()
 
     def __repr__(self):
         if self.program2 is None:
@@ -325,6 +352,13 @@ class Return(BaseBox):
 
     def __repr__(self):
         return 'return {!r}'.format(self.expr)
+
+class Newline(BaseBox):
+    def eval(self):
+        return None
+
+    def __repr__(self):
+        return 'NEWLINE'
 
 class Program(BaseBox):
     def __init__(self, statements={}):
