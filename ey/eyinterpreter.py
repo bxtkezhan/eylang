@@ -1,8 +1,4 @@
-from rply.token import BaseBox
-from rply.token import Token
-
-
-class Constant(BaseBox):
+class Constant:
     def __init__(self, value):
         self.value = eval(value.getstr())
 
@@ -12,7 +8,7 @@ class Constant(BaseBox):
     def __repr__(self):
         return '{!r}'.format(self.value)
 
-class Variable(BaseBox):
+class Variable:
     def __init__(self, name, var_dict):
         self.name = name.getstr()
         self.var_dict = var_dict
@@ -26,7 +22,7 @@ class Variable(BaseBox):
     def __repr__(self):
         return '{}'.format(self.name)
 
-class Attribute(BaseBox):
+class Attribute:
     def __init__(self, obj, attr, var_dict):
         self.obj = obj
         self.attr = attr
@@ -41,7 +37,7 @@ class Attribute(BaseBox):
     def __repr__(self):
         return '{}.{}'.format(self.obj, self.attr)
 
-class VarList(BaseBox):
+class VarList:
     def __init__(self, varlist=[]):
         self.varlist = varlist
 
@@ -54,7 +50,7 @@ class VarList(BaseBox):
     def __repr__(self):
         return ', '.join(map(str, self.varlist))
 
-class Index(BaseBox):
+class Index:
     def __init__(self, expr, indexlist):
         self.expr = expr
         self.indexlist = indexlist
@@ -81,7 +77,7 @@ class Index(BaseBox):
             return '({!r}[{}])'.format(self.expr, self.index2str(self.indexlist[0]))
         return '({!r}[{}])'.format(self.expr, ', '.join(self.index2str(index) for index in self.indexlist))
 
-class List(BaseBox):
+class List:
     def __init__(self, exprlist=[]):
         self.exprlist = exprlist
 
@@ -91,7 +87,7 @@ class List(BaseBox):
     def __repr__(self):
         return '{!r}'.format(self.exprlist)
 
-class Dictionary(BaseBox):
+class Dictionary:
     def __init__(self, pairlist={}):
         self.pairlist = pairlist
 
@@ -107,7 +103,7 @@ class Dictionary(BaseBox):
     def __repr__(self):
         return '{!r}'.format(self.pairlist)
 
-class Func(BaseBox):
+class Func:
     def __init__(self, obj, arglist=None):
         self.obj = obj
         self.arglist = arglist
@@ -128,7 +124,7 @@ class Func(BaseBox):
         else:
             return '{!r}()'.format(self.obj)
 
-class Parens(BaseBox):
+class Parens:
     def __init__(self, expr):
         self.expr = expr
 
@@ -138,7 +134,7 @@ class Parens(BaseBox):
     def __repr__(self):
         return '({!r})'.format(self.expr)
 
-class Sign(BaseBox):
+class Sign:
     def __init__(self, opt, expr):
         self.opt = opt.getstr()
         self.expr = expr
@@ -152,7 +148,7 @@ class Sign(BaseBox):
     def __repr__(self):
         return '{}{!r}'.format(self.opt, self.expr)
 
-class BinaryOp(BaseBox):
+class BinaryOp:
     def __init__(self, opt, left, right):
         self.opt = opt.getstr()
         self.left = left
@@ -187,7 +183,7 @@ class BinaryOp(BaseBox):
     def __repr__(self):
         return '{!r} {} {!r}'.format(self.left, self.opt, self.right)
 
-class Expr(BaseBox):
+class Expr:
     def __init__(self, expr):
         self.expr = expr
 
@@ -197,7 +193,7 @@ class Expr(BaseBox):
     def __repr__(self):
         return '{!r}'.format(self.expr)
 
-class Assign(BaseBox):
+class Assign:
     def __init__(self, varlist, expr):
         self.varlist = varlist
         self.expr = expr
@@ -214,7 +210,7 @@ class Assign(BaseBox):
     def __repr__(self):
         return '{} = {!r}'.format(self.varlist, self.expr)
 
-class Puts(BaseBox):
+class Puts:
     def __init__(self, expr):
         self.expr = expr
 
@@ -224,7 +220,7 @@ class Puts(BaseBox):
     def __repr__(self):
         return 'puts {!r}'.format(self.expr)
 
-class ELIF(BaseBox):
+class ELIF:
     def __init__(self, expr):
         self.expr = expr
 
@@ -234,7 +230,7 @@ class ELIF(BaseBox):
     def __repr__(self):
         return 'elif {!r} then'.format(self.expr)
 
-class IF(BaseBox):
+class IF:
     def __init__(self, expr, program1, program2=None):
         self.expr = expr
         self.program1 = program1
@@ -269,7 +265,7 @@ class IF(BaseBox):
         else:
             return 'if {!r} then\n{!r}\nelse\n{!r}\nend'.format(self.expr, self.program1, self.program2)
 
-class While(BaseBox):
+class While:
     def __init__(self, expr, program1, program2=None):
         self.expr = expr
         self.program1 = program1
@@ -288,7 +284,7 @@ class While(BaseBox):
         else:
             return 'while {!r} then\n{!r}\nelse\n{!r}\nend'.format(self.expr, self.program1, self.program2)
 
-class For(BaseBox):
+class For:
     def __init__(self, varlist, expr, program1, program2=None):
         self.varlist = varlist
         self.expr = expr
@@ -373,7 +369,7 @@ class ArgList:
         kwargs = ', '.join('{!r}={!r}'.format(item[0], item[1]) for item in self.items if len(item) == 2)
         return args + ', ' * bool(args) * bool(kwargs) + kwargs
 
-class DEF(BaseBox):
+class DEF:
     def __init__(self, variable, program, paralist=None):
         self.variable = variable
         self.paralist = paralist
@@ -393,7 +389,7 @@ class ReturnInterrupt(Exception):
         super().__init__(result)
         self.result = result
 
-class Return(BaseBox):
+class Return:
     def __init__(self, expr):
         self.expr = expr
 
@@ -403,14 +399,14 @@ class Return(BaseBox):
     def __repr__(self):
         return 'return {!r}'.format(self.expr)
 
-class Newline(BaseBox):
+class Newline:
     def eval(self):
         return None
 
     def __repr__(self):
         return 'NEWLINE'
 
-class Program(BaseBox):
+class Program:
     def __init__(self, statements={}):
         self.statements = statements
 

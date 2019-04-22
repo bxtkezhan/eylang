@@ -1,2 +1,2 @@
-# Dragon
-Dragon programming language
+# Eylang
+Easy programming language

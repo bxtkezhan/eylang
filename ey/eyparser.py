@@ -1,6 +1,6 @@
-from .easylexer import reserved
-from .easylexer import rules as lex_rules
-from .easyinterpreter import *
+from .eylexer import reserved
+from .eylexer import rules as lex_rules
+from .eyinterpreter import *
 from rply import ParserGenerator
 
 
