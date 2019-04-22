@@ -1,5 +1,5 @@
-from ey.eylexer import lexer
-from ey.eyparser import parser
+from eylang.eylanglexer import lexer
+from eylang.eylangparser import parser
 import pprint
 
 

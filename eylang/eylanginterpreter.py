@@ -310,7 +310,7 @@ class For:
         else:
             return 'for {!r} in {!r} then\n{!r}\nelse\n{!r}\nend'.format(self.varlist, self.expr, self.program1, self.program2)
 
-class EasyFunc:
+class EylangFunc:
     def __init__(self, paralist, program):
         self.paralist = paralist
         self.program = program
@@ -376,7 +376,7 @@ class DEF:
         self.program = program
 
     def eval(self):
-        self.variable.set(EasyFunc(self.paralist, self.program))
+        self.variable.set(EylangFunc(self.paralist, self.program))
 
     def __repr__(self):
         if self.paralist is None:
