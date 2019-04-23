@@ -1,3 +1,31 @@
+class EylangVars:
+    def __init__(self, var_dict={}):
+        self.global_vars = var_dict
+        self.local_vars = self.global_vars
+
+    def setglobal(self, key, value):
+        self.global_vars[key] = value
+
+    def getglobal(self, key):
+        return self.global_vars[key]
+
+    def setlocal(self, key, value):
+        self.local_vars[key] = value
+
+    def getlocal(self, key):
+        return self.local_vars[key]
+
+    __setitem__ = setlocal
+
+    def __getitem__(self, key):
+        if key == 'locals':
+            return self.local_vars
+        elif key == 'globals':
+            return self.global_vars
+        if key in self.local_vars:
+            return self.local_vars[key]
+        return self.global_vars[key]
+
 class Constant:
     def __init__(self, value):
         self.value = eval(value.getstr())
@@ -9,24 +37,24 @@ class Constant:
         return '{!r}'.format(self.value)
 
 class Variable:
-    def __init__(self, name, var_dict):
+    def __init__(self, name, eylang_vars):
         self.name = name.getstr()
-        self.var_dict = var_dict
+        self.eylang_vars = eylang_vars
 
     def set(self, value):
-        self.var_dict[self.name] = value
+        self.eylang_vars[self.name] = value
 
     def eval(self):
-        return self.var_dict[self.name]
+        return self.eylang_vars[self.name]
 
     def __repr__(self):
         return '{}'.format(self.name)
 
 class Attribute:
-    def __init__(self, obj, attr, var_dict):
+    def __init__(self, obj, attr, eylang_vars):
         self.obj = obj
         self.attr = attr
-        self.var_dict = var_dict
+        self.eylang_vars = eylang_vars
 
     def set(self, value):
         setattr(self.obj.eval(), self.attr.name, value)
@@ -103,20 +131,60 @@ class Dictionary:
     def __repr__(self):
         return '{!r}'.format(self.pairlist)
 
+class ArgList:
+    def __init__(self, item=None):
+        self.items = [] if item is None else [item]
+
+    def __len__(self):
+        return len(self.items)
+
+    def append(self, item):
+        self.items.append(item)
+
+    def eval(self):
+        args = []
+        kwargs = []
+        for item in self.items:
+            if len(item) == 1:
+                args.append(item[0].eval())
+            else:
+                kwargs.append((item[0], item[1].eval()))
+        return args, kwargs
+
+    def __repr__(self):
+        args = ', '.join(repr(item[0]) for item in self.items if len(item) == 1)
+        kwargs = ', '.join('{!r}={!r}'.format(item[0], item[1]) for item in self.items if len(item) == 2)
+        return args + ', ' * bool(args) * bool(kwargs) + kwargs
+
+class EylangFunc:
+    def __init__(self, paralist, program):
+        self.paralist = paralist
+        self.program = program
+
+    def __call__(self, args, kwargs, eylang_vars):
+        local_vars_tmp = eylang_vars.local_vars
+        eylang_vars.local_vars = {}
+        self.paralist.eval()
+        for i, value in enumerate(args):
+            self.paralist.set(i, value)
+        for variable, value in kwargs:
+            variable.set(value)
+        result = None
+        try:
+            self.program.eval()
+        except ReturnInterrupt as e:
+            result = e.result
+        eylang_vars.local_vars = local_vars_tmp
+        return result
+
 class Func:
     def __init__(self, obj, arglist=None):
         self.obj = obj
-        self.arglist = arglist
+        self.arglist = arglist or ArgList()
 
     def eval(self):
-        try:
-            if self.arglist is None:
-                result = self.obj.eval()()
-            else:
-                result = self.obj.eval()(self.arglist.eval())
-        except ReturnInterrupt as e:
-            result = e.result
-        return result
+        args, kwargs = self.arglist.eval()
+        return self.obj.eval()(args, kwargs, self.obj.eylang_vars)
 
     def __repr__(self):
         if self.arglist is not None:
@@ -310,24 +378,12 @@ class For:
         else:
             return 'for {!r} in {!r} then\n{!r}\nelse\n{!r}\nend'.format(self.varlist, self.expr, self.program1, self.program2)
 
-class EylangFunc:
-    def __init__(self, paralist, program):
-        self.paralist = paralist
-        self.program = program
-
-    def __call__(self, args=None):
-        self.paralist.eval()
-        if args is not None:
-            args, kwargs = args
-            for i, value in enumerate(args):
-                self.paralist.set(i, value)
-            for variable, value in kwargs:
-                variable.set(value)
-        self.program.eval()
-
 class ParaList:
     def __init__(self, item=None):
         self.items = [] if item is None else [item]
+
+    def __len__(self):
+        return len(self.items)
 
     def append(self, item):
         self.items.append(item)
@@ -347,42 +403,20 @@ class ParaList:
         kwargs = ', '.join('{!r}={!r}'.format(item[0], item[1]) for item in self.items if len(item) == 2)
         return args + ', ' * bool(args) * bool(kwargs) + kwargs
 
-class ArgList:
-    def __init__(self, item=None):
-        self.items = [] if item is None else [item]
-
-    def append(self, item):
-        self.items.append(item)
-
-    def eval(self):
-        args = []
-        kwargs = []
-        for item in self.items:
-            if len(item) == 1:
-                args.append(item[0].eval())
-            else:
-                kwargs.append((item[0], item[1].eval()))
-        return args, kwargs
-
-    def __repr__(self):
-        args = ', '.join(repr(item[0]) for item in self.items if len(item) == 1)
-        kwargs = ', '.join('{!r}={!r}'.format(item[0], item[1]) for item in self.items if len(item) == 2)
-        return args + ', ' * bool(args) * bool(kwargs) + kwargs
-
 class DEF:
     def __init__(self, variable, program, paralist=None):
         self.variable = variable
-        self.paralist = paralist
+        self.paralist = paralist or ParaList()
         self.program = program
 
     def eval(self):
         self.variable.set(EylangFunc(self.paralist, self.program))
 
     def __repr__(self):
-        if self.paralist is None:
-            return 'def {!r}() then\n{!r}\nend'.format(self.variable, self.program)
-        else:
+        if len(self.paralist):
             return 'def {!r}({!r}) then\n{!r}\nend'.format(self.variable, self.paralist, self.program)
+        else:
+            return 'def {!r}() then\n{!r}\nend'.format(self.variable, self.program)
 
 class ReturnInterrupt(Exception):
     def __init__(self, result):

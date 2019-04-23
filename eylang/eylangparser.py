@@ -4,7 +4,7 @@ from .eylanginterpreter import *
 from rply import ParserGenerator
 
 
-EASY_VARS = {}
+EYLANG_VARS = EylangVars()
 
 pg = ParserGenerator(
     list(reserved.values()) + [name for name, _ in lex_rules],
@@ -282,11 +282,11 @@ def p_varlist(p):
 
 @pg.production('attrivar : object DOT variable')
 def p_attrivar(p):
-    return Attribute(p[0], p[2], var_dict=EASY_VARS)
+    return Attribute(p[0], p[2], eylang_vars=EYLANG_VARS)
 
 @pg.production('variable : NAME')
 def p_variable(p):
-    return Variable(p[0], var_dict=EASY_VARS)
+    return Variable(p[0], eylang_vars=EYLANG_VARS)
 
 @pg.production('constant : NUMBER')
 @pg.production('constant : STRING')
