@@ -1,0 +1,8 @@
+a = 6
+b = 7
+c = 8
+d = 9
+
+puts a * b
+puts b ^ 2
+puts a % 3 + b + c - d

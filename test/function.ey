@@ -1,0 +1,15 @@
+def func1()
+	puts 'hello func1'
+end
+
+def func2()
+	return 'hello func2'
+end
+
+def add(a, b)
+	return a + b
+end
+
+func1()
+puts func2()
+puts add(10, 100)

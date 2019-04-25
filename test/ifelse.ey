@@ -1,0 +1,10 @@
+a = 10
+b = 100
+
+if a > b
+	c = a
+else
+	c = b
+end
+
+puts c
