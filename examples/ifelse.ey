@@ -2,9 +2,9 @@ a = 10
 b = 100
 
 if a > b
-	c = a
+    c = a
 else
-	c = b
+    c = b
 end
 
 puts c

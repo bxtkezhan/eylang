@@ -2,15 +2,15 @@ puts 'run while...'
 a = 9
 
 while a >= 0
-	puts a
-	a = a - 1
+    puts a
+    a = a - 1
 end
 
 puts 'run for...'
 list = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 for i in list
-	puts i
+    puts i
 end
 
 puts 'end'
