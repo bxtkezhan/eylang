@@ -1,0 +1,12 @@
+puts '菲波拉契数列\n'
+
+a, b = [0, 1]
+i, k = [0, 100]
+
+while i < k
+	puts [i, b]
+    a, b = [b, a + b]
+    i = i + 1
+end
+
+puts '\n程序结束'
