@@ -5,11 +5,18 @@ lg = LexerGenerator()
 lg.add("PLUS", r"\+")
 lg.add("MINUS", r"-")
 lg.add("NUMBER", r"\d+")
+lg.add("NAME", r"\w+")
+lg.add("EQUAL", r"=")
 
 lg.ignore(r"\s+")
 
-pg = ParserGenerator(["NUMBER", "PLUS", "MINUS"],
-        precedence=[("left", ['PLUS', 'MINUS'])], cache_id="myparser")
+pg = ParserGenerator(
+        ["NUMBER", "PLUS", "MINUS", "NAME", "EQUAL"],
+        precedence=[
+            ("left", ['EQUAL']),
+            ("left", ['PLUS', 'MINUS'])])
+
+global_vars = {}
 
 @pg.production("main : expr")
 def main(p):
@@ -27,9 +34,18 @@ def expr_op(p):
     else:
         raise AssertionError("This is impossible, abort the time machine!")
 
+@pg.production("expr : NAME EQUAL expr")
+def expr_assign(p):
+    global_vars[p[0].getstr()] = p[2]
+    return p[2]
+
 @pg.production("expr : NUMBER")
 def expr_num(p):
     return BoxInt(int(p[0].getstr()))
+
+@pg.production("expr : NAME")
+def expr_name(p):
+    return global_vars.get(p[0].getstr(), BoxInt(0))
 
 lexer = lg.build()
 parser = pg.build()
