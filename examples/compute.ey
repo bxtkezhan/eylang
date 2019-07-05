@@ -6,3 +6,4 @@ d = 9
 puts a * b
 puts b ^ 2
 puts a % 3 + b + c - d
+puts 6 / 2 * (1 + 2)
